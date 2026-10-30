@@ -25,7 +25,9 @@ import {
   Plus,
   Laptop,
   X,
-  Check
+  Check,
+  Mail,
+  Bot
 } from 'lucide-react';
 import { 
   PieChart, 
@@ -49,6 +51,8 @@ interface DashboardViewProps {
   budget: BudgetConfig;
   onNavigateTab: (tab: any) => void;
   onAddExpense: () => void;
+  onOpenMailModal?: () => void;
+  onOpenChat?: () => void;
 }
 
 export const DashboardView: React.FC<DashboardViewProps> = ({
@@ -56,6 +60,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   budget,
   onNavigateTab,
   onAddExpense,
+  onOpenMailModal,
+  onOpenChat,
 }) => {
   const [selectedMonth, setSelectedMonth] = useState<string>('all'); // 'all' or '2026-10'
 
@@ -266,13 +272,33 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             </select>
           </div>
 
+          {onOpenMailModal && (
+            <button
+              onClick={onOpenMailModal}
+              className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-semibold text-white bg-[#17171D] hover:bg-white/10 border border-white/10 transition-colors"
+              title="Mail Monthly Statement"
+            >
+              <Mail className="w-3.5 h-3.5 text-[#3DDC97]" />
+              <span className="inline">Email Report</span>
+            </button>
+          )}
+
+          <button
+            onClick={() => onNavigateTab('expense-predictor')}
+            className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-[#7C5CFF] to-[#6a47fc] hover:opacity-95 shadow-md shadow-[#7C5CFF]/20 transition-all"
+            title="Open AI Expense Predictor"
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            <span className="inline">AI Predictor</span>
+          </button>
+
           <button
             onClick={downloadSampleCSV}
             className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-medium text-[#9A9AA5] hover:text-white bg-[#17171D] border border-white/10 hover:border-white/20 transition-colors"
             title="Download Sample CSV Template"
           >
             <Download className="w-3.5 h-3.5 text-[#3DDC97]" />
-            <span className="inline">Sample CSV</span>
+            <span className="hidden sm:inline">Sample CSV</span>
           </button>
         </div>
       </div>

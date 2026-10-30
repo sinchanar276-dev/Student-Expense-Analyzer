@@ -17,6 +17,9 @@ import { HowToSaveView } from './components/HowToSaveView';
 import { BentoFeatures } from './components/BentoFeatures';
 import { MobileBottomNav } from './components/MobileBottomNav';
 import { AuthModal } from './components/AuthModal';
+import { ExpensePredictorView } from './components/ExpensePredictorView';
+import { FinancialChatbot } from './components/FinancialChatbot';
+import { MailReportModal } from './components/MailReportModal';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { 
   subscribeToUserTransactions, 
@@ -27,8 +30,21 @@ import {
   subscribeToUserBudget,
   saveBudgetToCloud
 } from './services/firestoreSync';
-import { Plus, X, Sparkles, Cloud, CloudCheck, ShieldCheck, LogIn } from 'lucide-react';
+import { 
+  Plus, 
+  X, 
+  Sparkles, 
+  Cloud, 
+  CloudCheck, 
+  ShieldCheck, 
+  LogIn, 
+  AlertTriangle, 
+  Mail, 
+  Download, 
+  CheckCircle2 
+} from 'lucide-react';
 import { categorizeDescription } from './utils/categorizer';
+import { generateBudgetWarningPDF } from './utils/pdfGenerator';
 
 const DEFAULT_BUDGET: BudgetConfig = {
   monthlyBudget: 1000.00,
@@ -49,6 +65,16 @@ function BudgioApp() {
 
   // Navigation
   const [activeTab, setActiveTab] = useState<ActiveTab>('dashboard');
+
+  // AI Chat & Mail Report Modals
+  const [isMailModalOpen, setIsMailModalOpen] = useState<boolean>(false);
+  const [isChatDrawerOpen, setIsChatDrawerOpen] = useState<boolean>(false);
+  const [chatInitialPrompt, setChatInitialPrompt] = useState<string>('');
+
+  const handleOpenChat = (prompt?: string) => {
+    if (prompt) setChatInitialPrompt(prompt);
+    setIsChatDrawerOpen(true);
+  };
 
   // Dark/Light Mode state
   const [isDark, setIsDark] = useState<boolean>(() => {
@@ -226,6 +252,118 @@ function BudgioApp() {
     }
   };
 
+  // Automated Budget Overrun Monitoring & Email Dispatch
+  const totalSpent = transactions.reduce((acc, t) => acc + (t.amount || 0), 0);
+  const monthlyBudget = budget.monthlyBudget || 1000;
+  const isOverBudget = totalSpent > monthlyBudget;
+  const overrunAmount = isOverBudget ? totalSpent - monthlyBudget : 0;
+  const budgetUtilization = monthlyBudget > 0 ? (totalSpent / monthlyBudget) * 100 : 0;
+
+  const [warningAlertState, setWarningAlertState] = useState<{
+    dispatched: boolean;
+    email: string;
+    overrun: number;
+    time: string;
+    dismissed: boolean;
+  }>({
+    dispatched: false,
+    email: user?.email || 'sinchanar276@gmail.com',
+    overrun: 0,
+    time: '',
+    dismissed: false,
+  });
+
+  const [isSendingWarning, setIsSendingWarning] = useState(false);
+
+  // Function to dispatch budget warning email with PDF attachment
+  const triggerBudgetWarningEmail = async (force: boolean = false) => {
+    if (!isOverBudget && !force) return;
+    const recipient = user?.email || 'sinchanar276@gmail.com';
+    const overrun = Math.max(0.01, totalSpent - monthlyBudget);
+    const sessionDedupeKey = `budgio_alert_sent_${recipient}_${Math.floor(totalSpent / 25)}`;
+
+    if (!force && sessionStorage.getItem(sessionDedupeKey)) {
+      return; // Already sent for this spend tier
+    }
+
+    setIsSendingWarning(true);
+    try {
+      const topExpenses = [...transactions].sort((a, b) => b.amount - a.amount).slice(0, 10);
+      const { base64, doc } = generateBudgetWarningPDF({
+        currency,
+        monthlyBudget,
+        totalSpent,
+        overrunAmount: overrun,
+        budgetUtilization,
+        userProfile: {
+          displayName: user?.displayName || 'Student',
+          email: recipient,
+        },
+        topExpenses,
+        alertDate: new Date().toLocaleString(),
+      });
+
+      const res = await fetch('/api/mail/budget-warning', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          toEmail: recipient,
+          currency,
+          monthlyBudget,
+          totalSpent,
+          overrunAmount: overrun,
+          budgetUtilization,
+          userProfile: {
+            displayName: user?.displayName || 'Student',
+            email: recipient,
+          },
+          topExpenses,
+          pdfBase64: base64,
+        }),
+      });
+
+      if (res.ok) {
+        sessionStorage.setItem(sessionDedupeKey, 'sent');
+        setWarningAlertState({
+          dispatched: true,
+          email: recipient,
+          overrun,
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          dismissed: false,
+        });
+      }
+    } catch (err) {
+      console.error('Error dispatching budget warning email:', err);
+    } finally {
+      setIsSendingWarning(false);
+    }
+  };
+
+  // Automatic trigger on budget threshold crossing
+  useEffect(() => {
+    if (isOverBudget && transactions.length > 0) {
+      triggerBudgetWarningEmail(false);
+    }
+  }, [isOverBudget, totalSpent, monthlyBudget]);
+
+  const handleDownloadWarningPDF = () => {
+    const topExpenses = [...transactions].sort((a, b) => b.amount - a.amount).slice(0, 10);
+    const { doc } = generateBudgetWarningPDF({
+      currency,
+      monthlyBudget,
+      totalSpent,
+      overrunAmount: Math.max(0.01, totalSpent - monthlyBudget),
+      budgetUtilization,
+      userProfile: {
+        displayName: user?.displayName || 'Student',
+        email: user?.email || 'sinchanar276@gmail.com',
+      },
+      topExpenses,
+      alertDate: new Date().toLocaleString(),
+    });
+    doc.save(`Budgio_Budget_Overrun_Warning_${new Date().toISOString().slice(0, 10)}.pdf`);
+  };
+
   return (
     <div className={`min-h-screen flex flex-col overflow-x-hidden w-full ${
       isDark ? 'bg-[#0B0B0F] text-slate-100' : 'bg-slate-50 text-slate-900'
@@ -239,6 +377,8 @@ function BudgioApp() {
         isDark={isDark}
         setIsDark={setIsDark}
         onQuickAdd={() => setIsQuickAddOpen(true)}
+        onOpenMailModal={() => setIsMailModalOpen(true)}
+        onOpenChat={() => handleOpenChat()}
       />
 
       {/* Cloud Sync Status Strip */}
@@ -276,6 +416,65 @@ function BudgioApp() {
       {/* Main Viewport Container */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 pt-4 sm:pt-6 pb-24 lg:pb-16 overflow-x-hidden">
         
+        {/* AUTOMATED BUDGET OVERRUN ALERT BANNER */}
+        {isOverBudget && !warningAlertState.dismissed && (
+          <div className="mb-6 p-4 rounded-2xl bg-gradient-to-r from-red-950/80 via-[#1C0F14] to-red-950/80 border border-red-500/40 shadow-[0_4px_25px_rgba(239,68,68,0.25)] flex flex-col md:flex-row md:items-center justify-between gap-4 animate-fadeIn">
+            <div className="flex items-start gap-3">
+              <div className="w-9 h-9 rounded-xl bg-red-500/20 border border-red-500/40 flex items-center justify-center text-red-400 shrink-0 mt-0.5 shadow-md shadow-red-500/20">
+                <AlertTriangle className="w-5 h-5 animate-bounce" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 className="text-sm font-bold text-white tracking-tight">
+                    ⚠️ Budget Limit Exceeded by {currency}{overrunAmount.toFixed(2)}
+                  </h3>
+                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-red-500/20 text-red-300 border border-red-500/30">
+                    {budgetUtilization.toFixed(1)}% Used
+                  </span>
+                  {warningAlertState.dispatched && (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-[#3DDC97] bg-[#3DDC97]/10 px-2 py-0.5 rounded-full border border-[#3DDC97]/20">
+                      <CheckCircle2 className="w-3 h-3" />
+                      Auto-Emailed to {warningAlertState.email} (PDF Attached)
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-red-200/90 mt-1">
+                  You have spent <strong className="text-white font-mono">{currency}{totalSpent.toFixed(2)}</strong> of your <strong className="text-white font-mono">{currency}{monthlyBudget.toFixed(2)}</strong> limit. A warning notification has been dispatched to <strong>{user?.email || 'sinchanar276@gmail.com'}</strong> with a complete audit PDF.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0 self-end md:self-center">
+              <button
+                onClick={handleDownloadWarningPDF}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-white font-semibold text-xs transition-colors cursor-pointer"
+                title="Download Incident Audit PDF"
+              >
+                <Download className="w-3.5 h-3.5 text-red-400" />
+                <span>Download Warning PDF</span>
+              </button>
+
+              <button
+                onClick={() => triggerBudgetWarningEmail(true)}
+                disabled={isSendingWarning}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-xs shadow-md shadow-red-600/30 transition-all disabled:opacity-50 cursor-pointer"
+                title="Resend Budget Warning Email with PDF"
+              >
+                <Mail className="w-3.5 h-3.5" />
+                <span>{isSendingWarning ? 'Dispatching...' : 'Resend Email Alert'}</span>
+              </button>
+
+              <button
+                onClick={() => setWarningAlertState(prev => ({ ...prev, dismissed: true }))}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
+                title="Dismiss banner"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Render Tab Views */}
         {activeTab === 'dashboard' && (
           <div className="space-y-10">
@@ -284,6 +483,8 @@ function BudgioApp() {
               budget={budget}
               onNavigateTab={setActiveTab}
               onAddExpense={() => setActiveTab('add-expenses')}
+              onOpenMailModal={() => setIsMailModalOpen(true)}
+              onOpenChat={() => handleOpenChat()}
             />
 
             {/* Bento Grid Features Section per specification */}
@@ -294,6 +495,27 @@ function BudgioApp() {
                 onNavigateTab={setActiveTab}
               />
             </div>
+          </div>
+        )}
+
+        {activeTab === 'expense-predictor' && (
+          <ExpensePredictorView
+            transactions={transactions}
+            budget={budget}
+            currency={currency}
+            onOpenChat={handleOpenChat}
+            onOpenMailModal={() => setIsMailModalOpen(true)}
+          />
+        )}
+
+        {activeTab === 'ai-chat' && (
+          <div className="py-2">
+            <FinancialChatbot
+              transactions={transactions}
+              budget={budget}
+              currency={currency}
+              onOpenMailModal={() => setIsMailModalOpen(true)}
+            />
           </div>
         )}
 
@@ -478,6 +700,39 @@ function BudgioApp() {
           </div>
         </div>
       </footer>
+
+      {/* Floating AI Financial Assistant Launcher (shows on all views except ai-chat) */}
+      {activeTab !== 'ai-chat' && (
+        <button
+          onClick={() => handleOpenChat()}
+          aria-label="Open Budgio AI Advisor"
+          className="fixed bottom-20 right-4 lg:bottom-6 lg:right-6 z-40 flex items-center gap-2 px-3.5 py-2.5 rounded-full bg-gradient-to-r from-[#7C5CFF] to-[#3DDC97] text-slate-950 font-black text-xs shadow-[0_4px_25px_rgba(124,92,255,0.45)] hover:shadow-[0_6px_30px_rgba(61,220,151,0.6)] active:scale-95 transition-all cursor-pointer group select-none"
+        >
+          <Sparkles className="w-4 h-4 text-slate-950 group-hover:rotate-12 transition-transform" />
+          <span className="hidden sm:inline">Ask Budgio AI</span>
+        </button>
+      )}
+
+      {/* Floating Chatbot Assistant Popout */}
+      <FinancialChatbot
+        transactions={transactions}
+        budget={budget}
+        currency={currency}
+        isFloating={true}
+        isOpen={isChatDrawerOpen}
+        onClose={() => setIsChatDrawerOpen(false)}
+        initialPrompt={chatInitialPrompt}
+        onOpenMailModal={() => setIsMailModalOpen(true)}
+      />
+
+      {/* Mail Monthly Expense Report Modal */}
+      <MailReportModal
+        isOpen={isMailModalOpen}
+        onClose={() => setIsMailModalOpen(false)}
+        transactions={transactions}
+        budget={budget}
+        currency={currency}
+      />
 
       {/* Mobile Bottom Navigation Bar */}
       <MobileBottomNav

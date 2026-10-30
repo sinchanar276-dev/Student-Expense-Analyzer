@@ -60,5 +60,7 @@ export type ActiveTab =
   | 'transactions'
   | 'budget-planner'
   | 'spending-insights'
+  | 'expense-predictor'
+  | 'ai-chat'
   | 'how-to-save'
   | 'features';

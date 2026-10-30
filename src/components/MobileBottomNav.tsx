@@ -4,6 +4,7 @@ import {
   ReceiptText, 
   Plus, 
   Wallet, 
+  TrendingUp, 
   Lightbulb, 
   BookOpen
 } from 'lucide-react';
@@ -65,7 +66,22 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
           </button>
         </div>
 
-        {/* Tab 4: Budget Planner */}
+        {/* Tab 4: Predictor */}
+        <button
+          onClick={() => setActiveTab('expense-predictor')}
+          className={`flex-1 min-h-[44px] flex flex-col items-center justify-center gap-1 transition-colors ${
+            activeTab === 'expense-predictor'
+              ? 'text-[#7C5CFF] font-semibold'
+              : 'text-[#9A9AA5] hover:text-white'
+          }`}
+        >
+          <TrendingUp className={`w-5 h-5 transition-transform ${activeTab === 'expense-predictor' ? 'scale-110 text-[#7C5CFF]' : ''}`} />
+          <span className="text-[10px] tracking-tight flex items-center gap-0.5">
+            Predict
+          </span>
+        </button>
+
+        {/* Tab 5: Budget */}
         <button
           onClick={() => setActiveTab('budget-planner')}
           className={`flex-1 min-h-[44px] flex flex-col items-center justify-center gap-1 transition-colors ${
@@ -76,19 +92,6 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
         >
           <Wallet className={`w-5 h-5 transition-transform ${activeTab === 'budget-planner' ? 'scale-110 text-[#3DDC97]' : ''}`} />
           <span className="text-[10px] tracking-tight">Budget</span>
-        </button>
-
-        {/* Tab 5: Insights */}
-        <button
-          onClick={() => setActiveTab('spending-insights')}
-          className={`flex-1 min-h-[44px] flex flex-col items-center justify-center gap-1 transition-colors ${
-            activeTab === 'spending-insights'
-              ? 'text-[#3DDC97] font-semibold'
-              : 'text-[#9A9AA5] hover:text-white'
-          }`}
-        >
-          <Lightbulb className={`w-5 h-5 transition-transform ${activeTab === 'spending-insights' ? 'scale-110 text-[#3DDC97]' : ''}`} />
-          <span className="text-[10px] tracking-tight">Insights</span>
         </button>
 
       </div>

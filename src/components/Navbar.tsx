@@ -7,7 +7,8 @@ import {
   X, 
   PlusCircle, 
   Download,
-  Sparkles
+  Sparkles,
+  Mail
 } from 'lucide-react';
 import { ActiveTab } from '../types';
 import { downloadSampleCSV } from '../utils/sampleData';
@@ -21,6 +22,8 @@ interface NavbarProps {
   isDark: boolean;
   setIsDark: (dark: boolean) => void;
   onQuickAdd: () => void;
+  onOpenMailModal: () => void;
+  onOpenChat: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -31,16 +34,20 @@ export const Navbar: React.FC<NavbarProps> = ({
   isDark,
   setIsDark,
   onQuickAdd,
+  onOpenMailModal,
+  onOpenChat,
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { user, signOutUser, openAuthModal } = useAuth();
 
-  const navLinks: { id: ActiveTab; label: string }[] = [
+  const navLinks: { id: ActiveTab; label: string; isAi?: boolean }[] = [
     { id: 'dashboard', label: 'Dashboard' },
     { id: 'add-expenses', label: 'Add Expenses' },
     { id: 'transactions', label: 'Transactions' },
     { id: 'budget-planner', label: 'Budget Planner' },
-    { id: 'spending-insights', label: 'Spending Insights' },
+    { id: 'expense-predictor', label: 'Predictor', isAi: true },
+    { id: 'ai-chat', label: 'AI Chat', isAi: true },
+    { id: 'spending-insights', label: 'Insights' },
     { id: 'how-to-save', label: 'How to Save' },
   ];
 
@@ -67,20 +74,25 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
 
           {/* Zone 2: Navigation Links (single line, subtle hover underlines) */}
-          <nav className="hidden lg:flex items-center gap-6 text-xs xl:text-sm font-medium">
+          <nav className="hidden lg:flex items-center gap-5 text-xs xl:text-sm font-medium">
             {navLinks.map((link) => {
               const isActive = activeTab === link.id;
               return (
                 <button
                   key={link.id}
                   onClick={() => setActiveTab(link.id)}
-                  className={`relative py-1.5 transition-colors whitespace-nowrap shrink-0 ${
+                  className={`relative py-1.5 transition-colors whitespace-nowrap shrink-0 flex items-center gap-1.5 ${
                     isActive 
                       ? 'text-white font-semibold' 
                       : 'text-[#9A9AA5] hover:text-white'
                   }`}
                 >
-                  {link.label}
+                  <span>{link.label}</span>
+                  {link.isAi && (
+                    <span className="text-[9px] font-extrabold px-1.5 py-0.2 rounded-full bg-gradient-to-r from-[#7C5CFF] to-[#3DDC97] text-slate-950 font-mono tracking-tighter shadow-sm">
+                      AI
+                    </span>
+                  )}
                   {isActive && (
                     <span className="absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r from-[#7C5CFF] to-[#3DDC97] rounded-full" />
                   )}
@@ -90,7 +102,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           </nav>
 
           {/* Zone 3: Actions & Controls */}
-          <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
             {/* Currency Selector */}
             <div className="flex items-center bg-[#17171D] border border-white/10 rounded-lg p-0.5 text-xs">
               {['$', '₹', '€', '£'].map((curr) => (
@@ -118,11 +130,31 @@ export const Navbar: React.FC<NavbarProps> = ({
               {isDark ? <Sun className="w-4 h-4 text-[#FBBF24]" /> : <Moon className="w-4 h-4 text-[#7C5CFF]" />}
             </button>
 
+            {/* Email Monthly Statement Button */}
+            <button
+              onClick={onOpenMailModal}
+              title="Mail Monthly Expense Report"
+              className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#17171D] hover:bg-white/10 border border-white/10 text-white text-xs font-medium transition-all"
+            >
+              <Mail className="w-3.5 h-3.5 text-[#3DDC97]" />
+              <span className="hidden xl:inline">Email Report</span>
+            </button>
+
+            {/* AI Financial Chatbot Quick Launcher Button */}
+            <button
+              onClick={onOpenChat}
+              title="Open Budgio AI Assistant"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#7C5CFF]/15 hover:bg-[#7C5CFF]/25 border border-[#7C5CFF]/40 text-[#7C5CFF] text-xs font-bold transition-all"
+            >
+              <Sparkles className="w-3.5 h-3.5 animate-pulse" />
+              <span className="hidden sm:inline">AI Advisor</span>
+            </button>
+
             {/* User Account / Sign In Control */}
             {user ? (
-              <div className="relative flex items-center gap-2 pl-1">
+              <div className="relative flex items-center gap-2 pl-0.5">
                 <div 
-                  className="flex items-center gap-2 p-1 pl-2 pr-2.5 rounded-xl bg-white/5 border border-white/10 hover:border-white/20 transition-all text-xs"
+                  className="flex items-center gap-1.5 p-1 pl-2 pr-2.5 rounded-xl bg-white/5 border border-white/10 hover:border-white/20 transition-all text-xs"
                   title={`Logged in as ${user.email}`}
                 >
                   {user.photoURL ? (
@@ -136,7 +168,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       {(user.displayName || user.email || 'U')[0].toUpperCase()}
                     </div>
                   )}
-                  <span className="hidden sm:inline font-medium text-white max-w-[90px] truncate text-xs">
+                  <span className="hidden sm:inline font-medium text-white max-w-[85px] truncate text-xs">
                     {user.displayName || user.email?.split('@')[0]}
                   </span>
                   <button
@@ -151,13 +183,13 @@ export const Navbar: React.FC<NavbarProps> = ({
             ) : (
               <button
                 onClick={() => openAuthModal('signin')}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-[#7C5CFF] to-[#6a47fc] hover:opacity-95 shadow-[0_0_15px_rgba(124,92,255,0.35)] transition-all cursor-pointer whitespace-nowrap"
+                className="inline-flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-[#7C5CFF] to-[#6a47fc] hover:opacity-95 shadow-[0_0_15px_rgba(124,92,255,0.35)] transition-all cursor-pointer whitespace-nowrap"
               >
                 <span>Sign In</span>
               </button>
             )}
 
-            {/* Quick Add Expense Button (Desktop / Tablet only, mobile uses bottom nav) */}
+            {/* Quick Add Expense Button (Desktop / Tablet only) */}
             <button
               onClick={onQuickAdd}
               className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-[#3DDC97] hover:bg-[#34c787] text-slate-900 font-bold transition-all shadow-sm whitespace-nowrap"
@@ -220,7 +252,30 @@ export const Navbar: React.FC<NavbarProps> = ({
             </div>
           </div>
 
-          <div className="pt-2">
+          <div className="pt-2 grid grid-cols-2 gap-2">
+            <button
+              onClick={() => {
+                onOpenMailModal();
+                setMobileMenuOpen(false);
+              }}
+              className="flex items-center justify-center gap-1.5 py-2 px-3 text-xs font-semibold text-white bg-white/10 border border-white/10 rounded-lg hover:bg-white/15 transition-colors"
+            >
+              <Mail className="w-3.5 h-3.5 text-[#3DDC97]" />
+              <span>Email Report</span>
+            </button>
+            <button
+              onClick={() => {
+                onOpenChat();
+                setMobileMenuOpen(false);
+              }}
+              className="flex items-center justify-center gap-1.5 py-2 px-3 text-xs font-bold text-white bg-gradient-to-r from-[#7C5CFF] to-[#6c48f8] rounded-lg shadow-sm"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>AI Advisor</span>
+            </button>
+          </div>
+
+          <div className="pt-1">
             <button
               onClick={() => {
                 downloadSampleCSV();
