@@ -1,0 +1,6 @@
+{
+  "name": "Student Expense Analyzer",
+  "description": "Track college student expenses, understand spending habits, visualize categories with interactive charts, plan monthly budgets, and get actionable savings recommendations.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

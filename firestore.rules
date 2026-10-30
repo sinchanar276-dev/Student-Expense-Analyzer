@@ -1,0 +1,133 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default-deny global safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Primitive Security Helpers
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Validation Blueprint for User Profiles
+    function isValidUserProfile(data, userId) {
+      return data.keys().hasAll(['uid', 'email'])
+        && data.keys().hasOnly(['uid', 'email', 'displayName', 'photoURL', 'createdAt'])
+        && data.uid == userId
+        && data.email is string
+        && data.email.size() > 3
+        && data.email.size() <= 150
+        && (!('displayName' in data) || (data.displayName is string && data.displayName.size() <= 100))
+        && (!('photoURL' in data) || (data.photoURL is string && data.photoURL.size() <= 500))
+        && (!('createdAt' in data) || (data.createdAt is string && data.createdAt.size() <= 50));
+    }
+
+    // Validation Blueprint for Student Expense Transactions
+    function isValidTransaction(data, userId) {
+      return data.keys().hasAll(['id', 'userId', 'date', 'description', 'amount', 'category', 'source'])
+        && data.keys().hasOnly(['id', 'userId', 'date', 'description', 'amount', 'category', 'source', 'notes', 'createdAt', 'updatedAt'])
+        && data.userId == userId
+        && data.id is string
+        && data.id.size() > 0
+        && data.id.size() <= 128
+        && data.date is string
+        && data.date.size() >= 8
+        && data.date.size() <= 20
+        && data.description is string
+        && data.description.size() > 0
+        && data.description.size() <= 200
+        && (data.amount is int || data.amount is float)
+        && data.amount > 0
+        && data.category is string
+        && (data.category == 'Food' || data.category == 'Transport' || data.category == 'Education' || data.category == 'Accommodation' || data.category == 'Shopping' || data.category == 'Entertainment' || data.category == 'Health' || data.category == 'Others')
+        && data.source is string
+        && data.source.size() <= 100
+        && (!('notes' in data) || (data.notes is string && data.notes.size() <= 500))
+        && (!('createdAt' in data) || (data.createdAt is string && data.createdAt.size() <= 50))
+        && (!('updatedAt' in data) || (data.updatedAt is string && data.updatedAt.size() <= 50));
+    }
+
+    // Validation Blueprint for Budget Settings
+    function isValidBudget(data, userId) {
+      return data.keys().hasAll(['userId', 'monthlyBudget', 'currency'])
+        && data.keys().hasOnly(['userId', 'monthlyBudget', 'currency', 'categoryBudgets', 'updatedAt'])
+        && data.userId == userId
+        && (data.monthlyBudget is int || data.monthlyBudget is float)
+        && data.monthlyBudget >= 0
+        && data.currency is string
+        && data.currency.size() <= 10
+        && (!('categoryBudgets' in data) || data.categoryBudgets is map)
+        && (!('updatedAt' in data) || (data.updatedAt is string && data.updatedAt.size() <= 50));
+    }
+
+    // Validation Blueprint for Savings Goal
+    function isValidSavingsGoal(data, userId) {
+      return data.keys().hasAll(['userId', 'name', 'savedAmount', 'targetAmount'])
+        && data.keys().hasOnly(['userId', 'name', 'savedAmount', 'targetAmount', 'updatedAt'])
+        && data.userId == userId
+        && data.name is string
+        && data.name.size() > 0
+        && data.name.size() <= 100
+        && (data.savedAmount is int || data.savedAmount is float)
+        && data.savedAmount >= 0
+        && (data.targetAmount is int || data.targetAmount is float)
+        && data.targetAmount > 0
+        && (!('updatedAt' in data) || (data.updatedAt is string && data.updatedAt.size() <= 50));
+    }
+
+    // Users Collection & Subcollections (Master Gate)
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow list: if false; // Disallow scraping users
+      allow create: if isOwner(userId) && isValidUserProfile(incoming(), userId);
+      allow update: if isOwner(userId) && isValidUserProfile(incoming(), userId) && incoming().uid == existing().uid;
+      allow delete: if isOwner(userId);
+
+      // Student Transactions Subcollection
+      match /transactions/{transactionId} {
+        allow get: if isOwner(userId) && isValidId(transactionId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidId(transactionId) && isValidTransaction(incoming(), userId);
+        allow update: if isOwner(userId) && isValidId(transactionId) && isValidTransaction(incoming(), userId) && incoming().id == existing().id && incoming().userId == existing().userId;
+        allow delete: if isOwner(userId) && isValidId(transactionId);
+      }
+
+      // Budget Config Document
+      match /budget/{docId} {
+        allow get: if isOwner(userId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidBudget(incoming(), userId);
+        allow update: if isOwner(userId) && isValidBudget(incoming(), userId) && incoming().userId == existing().userId;
+        allow delete: if isOwner(userId);
+      }
+
+      // Savings Goal Document
+      match /savingsGoal/{docId} {
+        allow get: if isOwner(userId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidSavingsGoal(incoming(), userId);
+        allow update: if isOwner(userId) && isValidSavingsGoal(incoming(), userId) && incoming().userId == existing().userId;
+        allow delete: if isOwner(userId);
+      }
+    }
+  }
+}

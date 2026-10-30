@@ -1,0 +1,12 @@
+{
+  "projectId": "student-expense-analyzer",
+  "appId": "1:1017615273557:web:3febb7d6f45d4e5d668edc",
+  "apiKey": "AIzaSyD9pX3q86q2JUOlY67949d6-bvnLc78x6w",
+  "authDomain": "student-expense-analyzer.firebaseapp.com",
+  "firestoreDatabaseId": "ai-studio-studentexpensean-ef783e58-d758-4d9d-9d7e-3ad146592d50",
+  "storageBucket": "student-expense-analyzer.firebasestorage.app",
+  "messagingSenderId": "1017615273557",
+  "measurementId": "",
+  "oAuthClientId": "1017615273557-ndv244isdaguuucqim4168n619lrk1er.apps.googleusercontent.com",
+  "recaptchaSiteKey": ""
+}
