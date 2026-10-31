@@ -314,7 +314,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <CreditCard className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
             </div>
           </div>
-          <div className="text-lg sm:text-2xl font-bold font-mono text-white tracking-tight truncate">
+          <div className="text-base sm:text-xl lg:text-2xl font-bold font-mono text-white tracking-tight truncate">
             {budget.currency}{totalExpenditure.toFixed(2)}
           </div>
           <div className="mt-1.5 sm:mt-2 text-[10px] sm:text-[11px] text-[#9A9AA5] flex items-center justify-between flex-wrap gap-1">
@@ -333,7 +333,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <TrendingUp className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
             </div>
           </div>
-          <div className="text-lg sm:text-2xl font-bold font-mono text-white tracking-tight truncate">
+          <div className="text-base sm:text-xl lg:text-2xl font-bold font-mono text-white tracking-tight truncate">
             {budget.currency}{averageDailyExpenditure.toFixed(2)}
             <span className="text-[10px] sm:text-xs font-normal text-[#9A9AA5]">/d</span>
           </div>
@@ -350,7 +350,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <Flame className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
             </div>
           </div>
-          <div className="text-base sm:text-2xl font-bold text-white tracking-tight truncate">
+          <div className="text-base sm:text-xl lg:text-2xl font-bold text-white tracking-tight truncate">
             {highestCategory ? highestCategory.category : 'None'}
           </div>
           <div className="mt-1.5 sm:mt-2 text-[10px] sm:text-[11px] text-[#9A9AA5] flex items-center justify-between flex-wrap gap-1">
@@ -373,7 +373,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <Receipt className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
             </div>
           </div>
-          <div className="text-lg sm:text-2xl font-bold font-mono text-white tracking-tight">
+          <div className="text-base sm:text-xl lg:text-2xl font-bold font-mono text-white tracking-tight">
             {transactionCount}
           </div>
           <div className="mt-1.5 sm:mt-2 text-[10px] sm:text-[11px] text-[#9A9AA5] flex items-center justify-between">

@@ -46,7 +46,6 @@ export const Navbar: React.FC<NavbarProps> = ({
     { id: 'transactions', label: 'Transactions' },
     { id: 'budget-planner', label: 'Budget Planner' },
     { id: 'expense-predictor', label: 'Predictor', isAi: true },
-    { id: 'ai-chat', label: 'AI Chat', isAi: true },
     { id: 'spending-insights', label: 'Insights' },
     { id: 'how-to-save', label: 'How to Save' },
   ];
@@ -54,34 +53,34 @@ export const Navbar: React.FC<NavbarProps> = ({
   return (
     <header className="sticky top-0 z-40 w-full backdrop-blur-md bg-[#0B0B0F]/90 dark:bg-[#0B0B0F]/90 border-b border-white/10 transition-colors">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between gap-6 h-16">
+        <div className="flex items-center justify-between gap-3 sm:gap-6 h-16">
           
-          {/* Zone 1: Brand Wordmark (Single text element wordmark with icon) */}
+          {/* Zone 1: Brand Wordmark */}
           <div 
             onClick={() => setActiveTab('dashboard')}
-            className="flex items-center gap-2.5 cursor-pointer whitespace-nowrap shrink-0 select-none group"
+            className="flex items-center gap-2 sm:gap-2.5 cursor-pointer whitespace-nowrap shrink-0 select-none group"
           >
             <img 
               src="/assets/aistudio/image_05f63413.png" 
               alt="Budgio App Icon" 
-              className="w-9 h-9 rounded-xl object-cover shadow-md shadow-blue-500/20 group-hover:scale-105 transition-transform border border-white/15" 
+              className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl object-cover shadow-md shadow-blue-500/20 group-hover:scale-105 transition-transform border border-white/15" 
             />
             <div className="flex flex-col">
-              <span className="text-lg font-extrabold tracking-tight text-white group-hover:text-[#3DDC97] transition-colors">
+              <span className="text-base sm:text-lg font-extrabold tracking-tight text-white group-hover:text-[#3DDC97] transition-colors">
                 Budgio
               </span>
             </div>
           </div>
 
-          {/* Zone 2: Navigation Links (single line, subtle hover underlines) */}
-          <nav className="hidden lg:flex items-center gap-5 text-xs xl:text-sm font-medium">
+          {/* Zone 2: Navigation Links (scaled and padded for laptop & desktop) */}
+          <nav className="hidden lg:flex items-center gap-2 xl:gap-4 text-xs xl:text-sm font-medium">
             {navLinks.map((link) => {
               const isActive = activeTab === link.id;
               return (
                 <button
                   key={link.id}
                   onClick={() => setActiveTab(link.id)}
-                  className={`relative py-1.5 transition-colors whitespace-nowrap shrink-0 flex items-center gap-1.5 ${
+                  className={`relative py-1.5 px-1 xl:px-1.5 transition-colors whitespace-nowrap shrink-0 flex items-center gap-1 xl:gap-1.5 ${
                     isActive 
                       ? 'text-white font-semibold' 
                       : 'text-[#9A9AA5] hover:text-white'
@@ -102,9 +101,9 @@ export const Navbar: React.FC<NavbarProps> = ({
           </nav>
 
           {/* Zone 3: Actions & Controls */}
-          <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
-            {/* Currency Selector */}
-            <div className="flex items-center bg-[#17171D] border border-white/10 rounded-lg p-0.5 text-xs">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            {/* Currency Selector: Full 4-pill on sm+, compact toggle on phone */}
+            <div className="hidden sm:flex items-center bg-[#17171D] border border-white/10 rounded-lg p-0.5 text-xs">
               {['$', '₹', '€', '£'].map((curr) => (
                 <button
                   key={curr}
@@ -120,55 +119,68 @@ export const Navbar: React.FC<NavbarProps> = ({
               ))}
             </div>
 
+            {/* Mobile Currency Tap Cycler (< sm) */}
+            <button
+              onClick={() => {
+                const list = ['$', '₹', '€', '£'];
+                const nextIdx = (list.indexOf(currency) + 1) % list.length;
+                setCurrency(list[nextIdx]);
+              }}
+              className="sm:hidden flex items-center justify-center px-2 h-7 rounded-lg bg-[#17171D] border border-white/10 text-white font-mono font-bold text-xs"
+              title="Tap to switch currency"
+            >
+              <span>{currency}</span>
+            </button>
+
             {/* Light / Dark Mode Toggle */}
             <button
               onClick={() => setIsDark(!isDark)}
               aria-label="Toggle theme"
-              className="p-1.5 sm:p-2 rounded-lg bg-[#17171D] border border-white/10 text-[#9A9AA5] hover:text-white hover:border-[#7C5CFF]/40 transition-all min-h-[36px] min-w-[36px] flex items-center justify-center"
+              className="p-1.5 sm:p-2 rounded-lg bg-[#17171D] border border-white/10 text-[#9A9AA5] hover:text-white hover:border-[#7C5CFF]/40 transition-all min-h-[34px] min-w-[34px] sm:min-h-[36px] sm:min-w-[36px] flex items-center justify-center"
               title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
             >
-              {isDark ? <Sun className="w-4 h-4 text-[#FBBF24]" /> : <Moon className="w-4 h-4 text-[#7C5CFF]" />}
+              {isDark ? <Sun className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#FBBF24]" /> : <Moon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#7C5CFF]" />}
             </button>
 
-            {/* Email Monthly Statement Button */}
+            {/* Email Monthly Statement Button (desktop & wide laptop) */}
             <button
               onClick={onOpenMailModal}
               title="Mail Monthly Expense Report"
-              className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#17171D] hover:bg-white/10 border border-white/10 text-white text-xs font-medium transition-all"
+              className="hidden xl:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#17171D] hover:bg-white/10 border border-white/10 text-white text-xs font-medium transition-all"
             >
               <Mail className="w-3.5 h-3.5 text-[#3DDC97]" />
-              <span className="hidden xl:inline">Email Report</span>
+              <span>Email Report</span>
             </button>
 
-            {/* AI Financial Chatbot Quick Launcher Button */}
+            {/* AI Financial Chatbot Quick Launcher Button (tablet and up) */}
             <button
               onClick={onOpenChat}
               title="Open Budgio AI Assistant"
-              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#7C5CFF]/15 hover:bg-[#7C5CFF]/25 border border-[#7C5CFF]/40 text-[#7C5CFF] text-xs font-bold transition-all"
+              className="hidden md:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#7C5CFF]/15 hover:bg-[#7C5CFF]/25 border border-[#7C5CFF]/40 text-[#7C5CFF] text-xs font-bold transition-all"
             >
               <Sparkles className="w-3.5 h-3.5 animate-pulse" />
-              <span className="hidden sm:inline">AI Advisor</span>
+              <span className="hidden xl:inline">AI Advisor</span>
             </button>
 
             {/* User Account / Sign In Control */}
             {user ? (
-              <div className="relative flex items-center gap-2 pl-0.5">
+              <div className="relative flex items-center gap-1.5 pl-0.5">
                 <div 
-                  className="flex items-center gap-1.5 p-1 pl-2 pr-2.5 rounded-xl bg-white/5 border border-white/10 hover:border-white/20 transition-all text-xs"
+                  className="flex items-center gap-1.5 p-1 pl-1.5 sm:pl-2 pr-2 sm:pr-2.5 rounded-xl bg-white/5 border border-white/10 hover:border-white/20 transition-all text-xs"
                   title={`Logged in as ${user.email}`}
                 >
                   {user.photoURL ? (
                     <img 
                       src={user.photoURL} 
                       alt={user.displayName || 'User'} 
-                      className="w-6 h-6 rounded-full object-cover border border-white/20"
+                      className="w-5 h-5 sm:w-6 sm:h-6 rounded-full object-cover border border-white/20"
                     />
                   ) : (
-                    <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-[#7C5CFF] to-[#3DDC97] text-white flex items-center justify-center font-bold text-[10px]">
+                    <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-gradient-to-tr from-[#7C5CFF] to-[#3DDC97] text-white flex items-center justify-center font-bold text-[10px]">
                       {(user.displayName || user.email || 'U')[0].toUpperCase()}
                     </div>
                   )}
-                  <span className="hidden sm:inline font-medium text-white max-w-[85px] truncate text-xs">
+                  <span className="hidden sm:inline font-medium text-white max-w-[75px] xl:max-w-[100px] truncate text-xs">
                     {user.displayName || user.email?.split('@')[0]}
                   </span>
                   <button
@@ -189,20 +201,20 @@ export const Navbar: React.FC<NavbarProps> = ({
               </button>
             )}
 
-            {/* Quick Add Expense Button (Desktop / Tablet only) */}
+            {/* Quick Add Expense Button (Desktop / Laptop only) */}
             <button
               onClick={onQuickAdd}
-              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-[#3DDC97] hover:bg-[#34c787] text-slate-900 font-bold transition-all shadow-sm whitespace-nowrap"
+              className="hidden lg:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-[#3DDC97] hover:bg-[#34c787] text-slate-900 font-bold transition-all shadow-sm whitespace-nowrap"
             >
               <PlusCircle className="w-3.5 h-3.5" />
               <span>Add</span>
             </button>
 
-            {/* Mobile Menu Button for Utilities */}
+            {/* Mobile / Tablet Menu Button for Utilities */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               aria-label="Toggle navigation menu"
-              className="lg:hidden p-1.5 sm:p-2 rounded-lg bg-[#17171D] border border-white/10 text-white min-h-[36px] min-w-[36px] flex items-center justify-center"
+              className="lg:hidden p-1.5 sm:p-2 rounded-lg bg-[#17171D] border border-white/10 text-white min-h-[34px] min-w-[34px] sm:min-h-[36px] sm:min-w-[36px] flex items-center justify-center"
             >
               {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
             </button>

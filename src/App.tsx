@@ -569,8 +569,8 @@ function BudgioApp() {
 
       {/* Global Quick Add Expense Modal */}
       {isQuickAddOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4">
-          <div className="bg-[#17171D] border border-white/10 rounded-[24px] max-w-md w-full p-6 space-y-4 shadow-2xl animate-scaleIn">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-3 sm:p-4 overflow-y-auto">
+          <div className="bg-[#17171D] border border-white/10 rounded-2xl sm:rounded-[24px] max-w-md w-full p-4 sm:p-6 space-y-4 shadow-2xl animate-scaleIn max-h-[90vh] overflow-y-auto my-auto">
             <div className="flex items-center justify-between border-b border-white/10 pb-3">
               <div className="flex items-center gap-2 text-white font-bold text-sm">
                 <Plus className="w-4 h-4 text-[#7C5CFF]" />
@@ -702,13 +702,14 @@ function BudgioApp() {
       </footer>
 
       {/* Floating AI Financial Assistant Launcher (shows on all views except ai-chat) */}
+      {/* Floating AI Financial Assistant Launcher */}
       {activeTab !== 'ai-chat' && (
         <button
           onClick={() => handleOpenChat()}
           aria-label="Open Budgio AI Advisor"
-          className="fixed bottom-20 right-4 lg:bottom-6 lg:right-6 z-40 flex items-center gap-2 px-3.5 py-2.5 rounded-full bg-gradient-to-r from-[#7C5CFF] to-[#3DDC97] text-slate-950 font-black text-xs shadow-[0_4px_25px_rgba(124,92,255,0.45)] hover:shadow-[0_6px_30px_rgba(61,220,151,0.6)] active:scale-95 transition-all cursor-pointer group select-none"
+          className="fixed top-24 right-3 sm:right-6 z-40 flex items-center justify-center gap-2 min-w-[44px] min-h-[44px] px-3 sm:px-4 py-2.5 rounded-full bg-gradient-to-r from-[#7C5CFF] to-[#3DDC97] text-slate-950 font-black text-xs shadow-[0_4px_25px_rgba(124,92,255,0.45)] hover:shadow-[0_6px_30px_rgba(61,220,151,0.6)] active:scale-95 transition-all cursor-pointer group select-none border border-white/20"
         >
-          <Sparkles className="w-4 h-4 text-slate-950 group-hover:rotate-12 transition-transform" />
+          <Sparkles className="w-4 h-4 text-slate-950 group-hover:rotate-12 transition-transform shrink-0" />
           <span className="hidden sm:inline">Ask Budgio AI</span>
         </button>
       )}

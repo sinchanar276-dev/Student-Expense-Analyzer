@@ -293,7 +293,7 @@ export const FinancialChatbot: React.FC<FinancialChatbotProps> = ({
   if (isFloating && !isOpen) return null;
 
   const containerClasses = isFloating
-    ? 'fixed bottom-20 right-4 sm:bottom-6 sm:right-6 z-50 w-[92vw] sm:w-[420px] h-[550px] max-h-[80vh] flex flex-col bg-[#121218] border border-white/15 rounded-2xl shadow-2xl overflow-hidden'
+    ? 'fixed top-24 inset-x-3 sm:inset-x-auto sm:right-6 sm:w-[420px] h-[540px] max-h-[calc(100vh-7rem)] flex flex-col bg-[#121218] border border-white/15 rounded-2xl shadow-2xl overflow-hidden z-50 animate-fadeIn'
     : 'w-full max-w-4xl mx-auto flex flex-col h-[750px] max-h-[82vh] bg-[#121218] border border-white/10 rounded-2xl shadow-xl overflow-hidden';
 
   return (

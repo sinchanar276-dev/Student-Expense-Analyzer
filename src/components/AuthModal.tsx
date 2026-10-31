@@ -96,9 +96,9 @@ export const AuthModal: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-fadeIn">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-3 sm:p-4 animate-fadeIn overflow-y-auto">
       <div 
-        className="bg-gradient-to-b from-[#17171D] via-[#121218] to-[#0D0D14] border border-white/10 rounded-[28px] max-w-md w-full p-6 sm:p-8 space-y-5 shadow-[0_20px_60px_rgba(0,0,0,0.8)] relative overflow-hidden"
+        className="bg-gradient-to-b from-[#17171D] via-[#121218] to-[#0D0D14] border border-white/10 rounded-2xl sm:rounded-[28px] max-w-md w-full p-4 sm:p-7 space-y-4 sm:space-y-5 shadow-[0_20px_60px_rgba(0,0,0,0.8)] relative overflow-hidden my-auto max-h-[92vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Ambient Top Glow */}

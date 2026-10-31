@@ -229,11 +229,7 @@ export const MailReportModal: React.FC<MailReportModalProps> = ({
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const openGmailCompose = () => {
-    const subject = encodeURIComponent(`Budgio Expense Statement - ${monthLabel}`);
-    const body = encodeURIComponent(successResult?.plainReport || `Total Spent: ${currency}${totalSpent.toFixed(2)}`);
-    window.open(`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(recipientEmail)}&su=${subject}&body=${body}`, '_blank');
-  };
+  const gmailComposeUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(recipientEmail)}&su=${encodeURIComponent(`Budgio Expense Statement - ${monthLabel}`)}&body=${encodeURIComponent(successResult?.plainReport || `Total Spent: ${currency}${totalSpent.toFixed(2)}`)}`;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm overflow-y-auto">
@@ -425,13 +421,15 @@ export const MailReportModal: React.FC<MailReportModalProps> = ({
                   </a>
                 )}
 
-                <button
-                  onClick={openGmailCompose}
+                <a
+                  href={gmailComposeUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/15 text-white font-medium text-xs transition-colors"
                 >
                   <Mail className="w-3.5 h-3.5" />
                   <span>Open in Gmail</span>
-                </button>
+                </a>
 
                 <button
                   onClick={handleCopyReport}

@@ -817,16 +817,34 @@ An official Budget Overrun Audit PDF is attached to this email.
   // Serve static assets or mount Vite dev middleware
   const distPath = path.resolve(process.cwd(), 'dist');
   const indexHtmlPath = path.resolve(distPath, 'index.html');
-  const isProd = process.env.NODE_ENV === 'production' || fs.existsSync(indexHtmlPath);
+  const isProd = process.env.NODE_ENV === 'production';
 
-  if (isProd && fs.existsSync(indexHtmlPath)) {
-    console.log(`Serving static production files from: ${distPath}`);
-    app.use(express.static(distPath));
-    app.get('*', (_req: Request, res: Response) => {
-      res.sendFile(indexHtmlPath);
-    });
+  if (isProd) {
+    if (fs.existsSync(indexHtmlPath)) {
+      console.log(`Serving static production files from: ${distPath}`);
+      app.use(express.static(distPath));
+      app.get('*', (_req: Request, res: Response) => {
+        if (fs.existsSync(indexHtmlPath)) {
+          res.sendFile(indexHtmlPath, (err) => {
+            if (err && !res.headersSent) {
+              res.status(500).send('Error serving application.');
+            }
+          });
+        } else {
+          res.status(500).send('Production index.html missing. Please build the application.');
+        }
+      });
+    } else {
+      console.warn('Production mode requested but dist/index.html not found! Mounting Vite fallback.');
+      const vite = await createViteServer({
+        server: { middlewareMode: true },
+        appType: 'spa',
+      });
+      app.use(vite.middlewares);
+    }
   } else {
-    console.log('Mounting Vite dev middleware');
+    // Development mode: ALWAYS mount Vite dev middleware per guidelines
+    console.log('Mounting Vite dev middleware in development mode');
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: 'spa',
