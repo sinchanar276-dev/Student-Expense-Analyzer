@@ -19,6 +19,7 @@ import {
 import { Transaction, BudgetConfig } from '../types';
 
 import { useAuth } from '../context/AuthContext';
+import { generateClientChatReply } from '../utils/clientChatEngine';
 
 interface Message {
   id: string;
@@ -198,17 +199,32 @@ export const FinancialChatbot: React.FC<FinancialChatbotProps> = ({
 
     try {
       const context = buildFinancialContext();
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: query,
-          context,
-        }),
-      });
+      let botReply = '';
 
-      const data = await response.json();
-      const botReply = data.reply || "I analyzed your question, but couldn't generate an answer.";
+      try {
+        const response = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message: query,
+            context,
+          }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data && data.reply) {
+            botReply = data.reply;
+          }
+        }
+      } catch (fetchErr) {
+        console.warn('Backend /api/chat unreachable (e.g. Netlify static hosting). Running client-side analysis engine:', fetchErr);
+      }
+
+      // If backend was unreachable (e.g. deployed on Netlify/static host) or returned empty, use client engine
+      if (!botReply) {
+        botReply = generateClientChatReply(query, context);
+      }
 
       const botMsg: Message = {
         id: (Date.now() + 1).toString(),
@@ -220,13 +236,15 @@ export const FinancialChatbot: React.FC<FinancialChatbotProps> = ({
       setMessages((prev) => [...prev, botMsg]);
     } catch (err) {
       console.error('Chat bot error:', err);
-      const errorMsg: Message = {
+      const context = buildFinancialContext();
+      const fallbackReply = generateClientChatReply(query, context);
+      const botMsg: Message = {
         id: (Date.now() + 1).toString(),
         sender: 'bot',
-        text: '⚠️ Sorry, I encountered an issue connecting to my financial analysis service. Please try again.',
+        text: fallbackReply,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       };
-      setMessages((prev) => [...prev, errorMsg]);
+      setMessages((prev) => [...prev, botMsg]);
     } finally {
       setLoading(false);
     }

@@ -177,46 +177,59 @@ export const MailReportModal: React.FC<MailReportModalProps> = ({
         customNotes: customNotes.trim(),
       });
 
-      // 2. Dispatch email with PDF attachment
-      const response = await fetch('/api/mail/monthly-report', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          toEmail: recipientEmail.trim(),
-          monthName: monthLabel,
-          currency,
-          summary: {
-            totalSpent,
-            monthlyBudget,
-            remainingBudget,
-            budgetUtilization,
-            dailyAverage,
-            transactionCount: monthTransactions.length,
-          },
-          categories,
-          topExpenses,
-          customNotes: customNotes.trim(),
-          pdfBase64: base64,
-          fileName: `Budgio_Statement_${selectedMonth}.pdf`,
-        }),
-      });
+      // 2. Attempt dispatch email with PDF attachment
+      try {
+        const response = await fetch('/api/mail/monthly-report', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            toEmail: recipientEmail.trim(),
+            monthName: monthLabel,
+            currency,
+            summary: {
+              totalSpent,
+              monthlyBudget,
+              remainingBudget,
+              budgetUtilization,
+              dailyAverage,
+              transactionCount: monthTransactions.length,
+            },
+            categories,
+            topExpenses,
+            customNotes: customNotes.trim(),
+            pdfBase64: base64,
+            fileName: `Budgio_Statement_${selectedMonth}.pdf`,
+          }),
+        });
 
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to dispatch email.');
+        if (response.ok) {
+          const data = await response.json();
+          setPdfGenerated(true);
+          setSuccessResult({
+            message: data.message,
+            previewUrl: data.previewUrl,
+            subject: data.subject,
+            plainReport: data.plainReport,
+            pdfBlob: blob,
+          });
+          return;
+        }
+      } catch (fetchErr) {
+        console.warn('Backend email dispatch unreachable (e.g. Netlify static hosting). Presenting client PDF download and Gmail options:', fetchErr);
       }
 
+      // 3. Fallback for static hosts (e.g. Netlify): Download PDF directly in browser and offer Gmail compose
+      doc.save(`Budgio_Statement_${selectedMonth}.pdf`);
       setPdfGenerated(true);
       setSuccessResult({
-        message: data.message,
-        previewUrl: data.previewUrl,
-        subject: data.subject,
-        plainReport: data.plainReport,
+        message: `Official statement PDF generated and downloaded to your device! You can also copy the report or open in Gmail for ${recipientEmail}.`,
+        subject: `Your Budgio Monthly Expense Statement - ${monthLabel}`,
+        plainReport: `BUDGIO - STUDENT EXPENSE STATEMENT\nPeriod: ${monthLabel}\nRecipient: ${recipientEmail}\nTotal Spent: ${currency}${totalSpent.toFixed(2)}\nBudget: ${currency}${monthlyBudget.toFixed(2)}\nRemaining: ${currency}${remainingBudget.toFixed(2)}\n\nCategories:\n${categories.map(c => `* ${c.category}: ${currency}${c.amount.toFixed(2)} (${c.percentage.toFixed(1)}%)`).join('\n')}`,
         pdfBlob: blob,
       });
     } catch (err: any) {
       console.error('Email error:', err);
-      setErrorMessage(err.message || 'Network error while contacting email service.');
+      setErrorMessage(err.message || 'Error generating statement PDF.');
     } finally {
       setLoading(false);
     }

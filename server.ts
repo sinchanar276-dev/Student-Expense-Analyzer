@@ -27,7 +27,9 @@ const ai = apiKey
 
 async function startServer() {
   const app = express();
-  const PORT = parseInt(process.env.PORT || '3000', 10);
+  const isProd = process.env.NODE_ENV === 'production';
+  // In development, AI Studio requires port 3000. In production (Cloud Run), use process.env.PORT.
+  const PORT = isProd ? parseInt(process.env.PORT || '8080', 10) : 3000;
 
   app.use(express.json({ limit: '10mb' }));
 
@@ -817,7 +819,6 @@ An official Budget Overrun Audit PDF is attached to this email.
   // Serve static assets or mount Vite dev middleware
   const distPath = path.resolve(process.cwd(), 'dist');
   const indexHtmlPath = path.resolve(distPath, 'index.html');
-  const isProd = process.env.NODE_ENV === 'production';
 
   if (isProd) {
     if (fs.existsSync(indexHtmlPath)) {
@@ -837,7 +838,7 @@ An official Budget Overrun Audit PDF is attached to this email.
     } else {
       console.warn('Production mode requested but dist/index.html not found! Mounting Vite fallback.');
       const vite = await createViteServer({
-        server: { middlewareMode: true },
+        server: { middlewareMode: true, hmr: false },
         appType: 'spa',
       });
       app.use(vite.middlewares);
@@ -846,7 +847,7 @@ An official Budget Overrun Audit PDF is attached to this email.
     // Development mode: ALWAYS mount Vite dev middleware per guidelines
     console.log('Mounting Vite dev middleware in development mode');
     const vite = await createViteServer({
-      server: { middlewareMode: true },
+      server: { middlewareMode: true, hmr: false },
       appType: 'spa',
     });
     app.use(vite.middlewares);
